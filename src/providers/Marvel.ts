@@ -181,11 +181,19 @@ const getAllCharacters = async (): Promise<number[]> => {
   return results
 }
 
-const getCharacterById = (characterId: string): Promise<Response> => {
-  return fetch(
+const getCharacterById = async (characterId: string): Promise<MarvelRespCharacter> => {
+  const mResp = await fetch(
     buildFetchUrl(`/v1/public/characters/${characterId}`), {
     ...buildRequestOptions()
   })
+
+  if (mResp.status < 200 || mResp.status >= 300) {
+    throw new Error('Failed to get character somehow')
+  }
+
+  const mJson: MarvelResp = await mResp.json()
+
+  return mJson.data.results[0]
 }
 
 export default {

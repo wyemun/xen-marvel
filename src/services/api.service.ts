@@ -1,5 +1,4 @@
 import http from 'http'
-import apicache from 'apicache'
 import express, { Request, Response, Express, NextFunction } from 'express'
 import Service from './Service'
 import ApiRoutes from '../routes/api.route'
