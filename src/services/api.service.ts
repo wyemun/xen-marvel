@@ -4,6 +4,7 @@ import Service from './Service'
 import ApiRoutes from '../routes/api.route'
 import CacheRoutes from '../routes/cache.route'
 import ExceptionHandler from '../exceptions/Handler'
+import swaggerLoader from '../loaders/swagger.loader'
 
 export interface ApiServiceConfig {
   port?: number
@@ -44,6 +45,8 @@ export default class ApiService extends Service<http.Server> {
   private mountRoutes(): void {
     this.expressApp.use('/characters', ApiRoutes)
     this.expressApp.use('/cache', CacheRoutes)
+
+    swaggerLoader(this.expressApp)
 
     this.expressApp.get('/', async (req, res) => {
       res.json({ message: 'hello world' })
