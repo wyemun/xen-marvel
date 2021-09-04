@@ -4,6 +4,7 @@ export interface ILocalConfig {
   marvelApiHost: string
   marvelApiKey: string
   marvelPrivateKey: string
+  apiCacheTime: string
 }
 
 export default class Locals {
@@ -13,7 +14,8 @@ export default class Locals {
       clusterMode: process.env.CLUSTER_MODE === '1' || false,
       marvelApiHost: process.env.MARVEL_API_HOST || 'https://gateway.marvel.com',
       marvelApiKey: process.env.MARVEL_API_PUBKEY || '',
-      marvelPrivateKey: process.env.MARVEL_API_PRIVATEKEY || ''
+      marvelPrivateKey: process.env.MARVEL_API_PRIVATEKEY || '',
+      apiCacheTime: process.env.API_CACHE_TIME || '1 day'
     }
   }
 }
