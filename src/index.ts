@@ -17,5 +17,5 @@ if (Locals.config().clusterMode && cluster.isPrimary) {
 
   CPUS.forEach(() => cluster.fork())
 } else {
-  void App.init()
+  App.init()
 }
