@@ -3,6 +3,7 @@ import express, { Request, Response, Express, NextFunction } from 'express'
 import Service from './Service'
 import ApiRoutes from '../routes/api.route'
 import CacheRoutes from '../routes/cache.route'
+import ExceptionHandler from '../exceptions/Handler'
 
 export interface ApiServiceConfig {
   port?: number
@@ -40,7 +41,7 @@ export default class ApiService extends Service<http.Server> {
     this.expressApp.use('/characters', ApiRoutes)
     this.expressApp.use('/cache', CacheRoutes)
 
-    this.expressApp.use('/', async (req, res) => {
+    this.expressApp.get('/', async (req, res) => {
       res.json({ message: 'hello world' })
     })
   }
@@ -49,7 +50,8 @@ export default class ApiService extends Service<http.Server> {
    * Define the exeption handlers for express
    */
   private mountExceptionHandlers(): void {
-    // * Can add logger here
+    this.expressApp.use(ExceptionHandler.logError) // always log error first
+    this.expressApp.use(ExceptionHandler.internalError)
 
     this.expressApp.use((err: Error, req: Request, res: Response, next: NextFunction) => {
       res.status(500).json({
@@ -57,11 +59,7 @@ export default class ApiService extends Service<http.Server> {
       })
     })
 
-    this.expressApp.use('*', (req: Request, res: Response) => {
-      res.status(404).json({
-        error: 'Page not found'
-      })
-    })
+    this.expressApp.use('*', ExceptionHandler.notFound)
   }
 
   /**

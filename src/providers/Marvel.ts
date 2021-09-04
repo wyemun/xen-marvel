@@ -1,6 +1,8 @@
 import fetch, { RequestInit, Response } from 'node-fetch'
 import crypto from 'crypto'
 import Locals from './Locals'
+import e from 'express'
+import { GenericResponseError } from '../exceptions/ResponseError'
 
 type QueryPaginationOptions = {
   limit: number
@@ -159,7 +161,7 @@ const getAllCharacters = async (): Promise<number[]> => {
 
     } else if (mResp.status >= 400) {
       const mJson: MarvelErrorResp = await mResp.json()
-      throw new Error(mJson.status)
+      throw new GenericResponseError(mJson.code, mJson.status)
     } else {
       const mJson: MarvelResp = await mResp.json()
       const characterIds = mJson.data.results.map(({id}) => id)
@@ -188,12 +190,13 @@ const getCharacterById = async (characterId: string): Promise<MarvelRespCharacte
   })
 
   if (mResp.status < 200 || mResp.status >= 300) {
-    throw new Error('Failed to get character somehow')
+    const mJson: MarvelErrorResp = await mResp.json()
+    throw new GenericResponseError(mJson.code, mJson.status)
+  } else {
+    const mJson: MarvelResp = await mResp.json()
+    return mJson.data.results[0]
   }
-
-  const mJson: MarvelResp = await mResp.json()
-
-  return mJson.data.results[0]
+  
 }
 
 export default {

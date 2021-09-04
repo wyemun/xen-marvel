@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import Marvel from '../providers/Marvel'
 
 interface GetCharacterByIdParam {
@@ -6,9 +6,8 @@ interface GetCharacterByIdParam {
 }
 
 export default class ApiController {
-  public static async getCharacterById(req: Request<GetCharacterByIdParam>, res: Response): Promise<any> {
+  public static async getCharacterById(req: Request<GetCharacterByIdParam>, res: Response, next: NextFunction): Promise<any> {
     const characterId = req.params.characterId
-
     try {
       const character = await Marvel.getCharacterById(characterId)
       return res.json({
@@ -17,23 +16,16 @@ export default class ApiController {
         Description: character.description
       })
     } catch (e: any) {
-      return res.status(500).json({
-        code: 500,
-        status: e.message || 'Unknown error'
-      })
+      next(e)
     }
   }
 
-  public static async getAllCharacters(req: Request, res:Response): Promise<any> {
+  public static async getAllCharacters(req: Request, res:Response, next: NextFunction): Promise<any> {
     try {
       const results = await Marvel.getAllCharacters()
       return res.json(results)
     } catch (e: any) {
-      console.log('Failed to get all characters', e)
-      return res.status(500).json({
-        code: 500,
-        status: e.message || 'Unknown error'
-      })
+      next(e)
     }
   }
 }
