@@ -5,11 +5,14 @@ import Locals from './Locals'
 const buildRequestOptions = (): Partial<RequestInit> => {
   return {
     method: 'get',
+    headers: {
+      'Accept-Encoding': 'gzip'
+    }
   }
 }
 
 export const buildFetchUrl = (path: string): string => {
-  console.log('Preparing fetch request to Marvel API...')
+  console.log('Preparing fetch request to Marvel API...: %s', path, Date.now())
   const ts = Date.now()
   const hash = crypto.createHash('md5').update(`${ts}${Locals.config().marvelPrivateKey}${Locals.config().marvelApiKey}`).digest('hex')
 
