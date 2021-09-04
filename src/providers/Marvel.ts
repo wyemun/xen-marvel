@@ -161,7 +161,7 @@ const getAllCharacters = async (): Promise<number[]> => {
 
     } else if (mResp.status >= 400) {
       const mJson: MarvelErrorResp = await mResp.json()
-      throw new GenericResponseError(mJson.code, mJson.status)
+      throw new GenericResponseError(mResp.status, mJson.status || 'Unknown error')
     } else {
       const mJson: MarvelResp = await mResp.json()
       const characterIds = mJson.data.results.map(({id}) => id)

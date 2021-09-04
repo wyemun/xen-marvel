@@ -28,9 +28,11 @@ export default class Handler {
   }
 
   public static logError(err: Error, req: Request, res: Response, next: NextFunction): void {
-    if (!(err instanceof ResponseError)) {
-      console.log(err.stack) // * Replace with a proper logger like Winston
-    }
+    console.log(err) // * Replace with a proper logger like Winston
+
+    // if (!(err instanceof ResponseError)) {
+    //   console.log(err.stack)
+    // }
     return next(err)
   }
 

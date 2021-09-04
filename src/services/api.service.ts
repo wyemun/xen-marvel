@@ -69,4 +69,8 @@ export default class ApiService extends Service<http.Server> {
     this.httpServer = http.createServer(this.expressApp)
     return this.httpServer.listen(this.port)
   }
+
+  public kill(): void {
+    this.httpServer?.close()
+  }
 }
