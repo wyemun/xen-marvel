@@ -1,0 +1,13 @@
+{
+  "eslint.validate": [
+    {
+      "language": "typescript"
+    }
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "editor.tabSize": 2,
+  "json.maxItemsComputed": 15000,
+  "editor.formatOnSave": true
+}
