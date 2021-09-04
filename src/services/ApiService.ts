@@ -3,6 +3,7 @@ import apicache from 'apicache'
 import express, { Request, Response, Express, NextFunction } from 'express'
 import Service from './Service'
 import ApiRoutes from '../routes/api.route'
+import CacheRoutes from '../routes/cache.route'
 
 export interface ApiServiceConfig {
   port?: number
@@ -38,16 +39,7 @@ export default class ApiService extends Service<http.Server> {
    */
   private mountRoutes(): void {
     this.expressApp.use('/characters', ApiRoutes)
-
-    // ! temp
-    this.expressApp.get('/cache/index', (req, res) => {
-      res.json(apicache.getIndex())
-    })
-
-    // ! temp
-    this.expressApp.get('/cache/performance', (req, res) => {
-      res.json(apicache.getPerformance())
-    })
+    this.expressApp.use('/cache', CacheRoutes)
 
     this.expressApp.use('/', async (req, res) => {
       res.json({ message: 'hello world' })
