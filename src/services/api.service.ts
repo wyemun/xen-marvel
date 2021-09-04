@@ -24,6 +24,10 @@ export default class ApiService extends Service<http.Server> {
     this.mountExceptionHandlers()
   }
 
+  public getExpressApp () {
+    return this.expressApp
+  }
+
   /**
    * Define the expressJS middlewares
    */
