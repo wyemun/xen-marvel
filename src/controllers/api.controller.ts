@@ -24,20 +24,25 @@ interface MarvelResp {
   }
 }
 
+interface MarvelErrorResp {
+  code: number
+  status: string
+}
+
 export default class ApiController {
   public static async getCharacterById(req: Request<GetCharacterByIdParam>, res: Response): Promise<any> {
     const characterId = req.params.characterId
 
     const mRes = await Marvel.getCharacterById(characterId)
-    const mJson: MarvelResp = await mRes.json()
+    const mJson: MarvelResp | MarvelErrorResp = await mRes.json()
     
-    if (mRes.status < 200 || mRes.status >= 300 || mJson.data?.total < 1) {
+    if (mRes.status < 200 || mRes.status >= 300) { // TODO handle ETAG cache 304
       console.log('Marvel API failed: %s', mRes.status)
       console.log('Response: ', mJson)
-      throw new Error('Failed to get request')
+      return res.status(404).json(<MarvelErrorResp>mJson)
     }
 
-    const character = mJson.data.results[0]
+    const character = (<MarvelResp>mJson).data.results[0]
 
     return res.json({
       Id: character.id,
@@ -48,15 +53,15 @@ export default class ApiController {
 
   public static async getAllCharacters(req: Request, res:Response): Promise<any> {
     const mRes = await Marvel.getAllCharacters()
-    const mJson: MarvelResp = await mRes.json()
+    const mJson: MarvelResp | MarvelErrorResp = await mRes.json()
     
     if (mRes.status < 200 || mRes.status >= 300) { // TODO handle ETAG cache 304
       console.log('Marvel API failed: %s', mRes.status)
       console.log('Response: ', mJson)
-      throw new Error('Failed to get request')
+      return res.status(404).json(<MarvelErrorResp>mJson)
     }
 
-    const characterIds = mJson.data.results.map(({id}) => id)
+    const characterIds = (<MarvelResp>mJson).data.results.map(({id}) => id)
     return res.json(characterIds)
   }
 }

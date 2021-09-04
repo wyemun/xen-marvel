@@ -9,6 +9,7 @@ const buildRequestOptions = (): Partial<RequestInit> => {
 }
 
 export const buildFetchUrl = (path: string): string => {
+  console.log('Preparing fetch request to Marvel API...')
   const ts = Date.now()
   const hash = crypto.createHash('md5').update(`${ts}${Locals.config().marvelPrivateKey}${Locals.config().marvelApiKey}`).digest('hex')
 
