@@ -52,13 +52,6 @@ export default class ApiService extends Service<http.Server> {
   private mountExceptionHandlers(): void {
     this.expressApp.use(ExceptionHandler.logError) // always log error first
     this.expressApp.use(ExceptionHandler.internalError)
-
-    this.expressApp.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-      res.status(500).json({
-        error: 'Internal error'
-      })
-    })
-
     this.expressApp.use('*', ExceptionHandler.notFound)
   }
 
