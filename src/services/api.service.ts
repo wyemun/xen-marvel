@@ -1,5 +1,5 @@
 import http from 'http'
-import express, { Request, Response, Express, NextFunction } from 'express'
+import express, { Express } from 'express'
 import Service from './Service'
 import ApiRoutes from '../routes/api.route'
 import CacheRoutes from '../routes/cache.route'
@@ -7,7 +7,7 @@ import ExceptionHandler from '../exceptions/Handler'
 import swaggerLoader from '../loaders/swagger.loader'
 
 export interface ApiServiceConfig {
-  port?: number
+  port: number
 }
 
 export default class ApiService extends Service<http.Server> {
@@ -17,7 +17,7 @@ export default class ApiService extends Service<http.Server> {
 
   constructor(config: ApiServiceConfig) {
     super('api-service')
-    this.port = config.port || 8080
+    this.port = config.port
     this.expressApp = express()
 
     this.mountMiddlewares()
@@ -66,6 +66,7 @@ export default class ApiService extends Service<http.Server> {
    * Start http server
    */
   public async start(): Promise<http.Server> {
+    console.log('Server starting at port: %s', this.port)
     this.httpServer = http.createServer(this.expressApp)
     return this.httpServer.listen(this.port)
   }
