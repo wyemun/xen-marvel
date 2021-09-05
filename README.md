@@ -35,7 +35,7 @@ npm start
 
 - Unit test (always placed at the same directory as its tested counterpart, eg `Locals.spec.ts` for `Locals.ts`)
 - Behaviour test with `supertest` library. See `/test` directory for all the API test cases.
-- `NOTE` not all function and classes are attached with unit test for now :(
+- `NOTE` not all function and classes are attached with unit test for now :( (I hope the few tests I added is sufficient for evaluation for now...)
 
 ## Server configuration
 
