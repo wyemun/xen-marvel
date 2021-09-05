@@ -13,12 +13,13 @@ const onlyStatus200 = (req: Request, res: Response) => res.statusCode === 200
 /**
  * @openapi
  *
- * /characters/:characterId:
+ * /characters/{characterId}:
  *  get:
  *    summary: Returns Marvel character by character id
  *    parameters:
- *      - in: param
+ *      - in: path
  *        name: characterId
+ *        required: true
  *        description: Marvel character id
  *        schema:
  *          type: integer
