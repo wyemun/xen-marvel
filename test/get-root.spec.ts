@@ -16,4 +16,11 @@ describe('API Service', () => {
     expect(res.statusCode).toEqual(200)
     expect(res.body.message).toEqual('hello world')
   })
+
+  it('should return status 404', async () => {
+    const res = await request(service.getExpressApp())
+      .get('/non-existence')
+
+    expect(res.statusCode).toEqual(404)
+  })
 })

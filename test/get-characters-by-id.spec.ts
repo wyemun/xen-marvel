@@ -10,7 +10,7 @@ const uri = '/characters'
 
 const chance = new Chance()
 
-describe('[API] Get Characters', () => {
+describe('[API] Get Characters By Id', () => {
   let service: ApiService
 
   beforeAll(async () => {
@@ -24,22 +24,23 @@ describe('[API] Get Characters', () => {
     nock.cleanAll()
   })
 
-  it('should return a list of characters', async () => {
-    const totalCharacters = 20
+  it('should return the character', async () => {
+    const mockedCharacter = {
+      id: chance.integer({min: 100000, max: 199999}),
+      name: chance.name(),
+      description: chance.sentence(),
+      modified: chance.date()
+    }
+
     const mockedResponse = {
       code: 200,
       etag: chance.hash(),
       data: {
         offset: 0,
-        limit: 100,
-        total: totalCharacters,
-        count: totalCharacters,
-        results: [...Array(totalCharacters)].map((_, i) => ({
-          id: chance.integer({min: 100000, max: 199999}),
-          name: chance.name(),
-          description: chance.sentence(),
-          modified: chance.date()
-          }))
+        limit: 1,
+        total: 1,
+        count: 1,
+        results: [mockedCharacter]
       }}
 
     nock(Locals.config().marvelApiHost)
@@ -48,27 +49,32 @@ describe('[API] Get Characters', () => {
       .reply(200, mockedResponse)
   
     const res = await request(service.getExpressApp())
-      .get(uri)
+      .get(`${uri}/${mockedCharacter.id}`)
 
     expect(res.statusCode).toEqual(200)
-    expect(res.body).toHaveLength(totalCharacters)
+    expect(res.body).toHaveProperty('Name', mockedCharacter.name)
+    expect(res.body).toHaveProperty('Description', mockedCharacter.description)
+    expect(res.body).toHaveProperty('Id', mockedCharacter.id)
   })
 
-  it('should forward Marvel api error response', async () => {
+  it('should return not found when invalid id', async () => {
     const mockedResponse = {
-      code: 400,
-      status: 'something went bad'
-      }
+      code: 404,
+      status:'Not found'
+    }
 
     nock(Locals.config().marvelApiHost)
       .get(/\/v1\/public\/characters.*$/)
-      .reply(400, mockedResponse)
-
+      .once()
+      .reply(404, mockedResponse)
+  
     const res = await request(service.getExpressApp())
-      .get(uri)
+      .get(`${uri}/${chance.integer({min: 1000000, max: 1999999})}`)
 
-    expect(res.statusCode).toEqual(400)
-    expect(res.body.status).toEqual(mockedResponse.status)
+    expect(res.statusCode).toEqual(404)
+    expect(res.body).toHaveProperty('code', 404)
+    expect(res.body).toHaveProperty('status', 'Not found')
   })
+
 
 })
