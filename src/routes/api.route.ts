@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Request, Response, Router } from 'express'
 import apicache from 'apicache'
 import ApiController from '../controllers/api.controller'
 import Locals from '../providers/Locals'
@@ -7,6 +7,8 @@ const router = Router()
 
 const cache = apicache.middleware
 const cacheTime = Locals.config().apiCacheTime
+
+const onlyStatus200 = (req: Request, res: Response) => res.statusCode === 200
 
 /**
  * @openapi
@@ -40,7 +42,7 @@ const cacheTime = Locals.config().apiCacheTime
  *                  type: string
  *                  example: "Big guy"
  */
-router.get('/:characterId', cache(cacheTime), ApiController.getCharacterById)
+router.get('/:characterId', cache(cacheTime, onlyStatus200), ApiController.getCharacterById)
 
 /**
  * @openapi
@@ -60,7 +62,7 @@ router.get('/:characterId', cache(cacheTime), ApiController.getCharacterById)
  *                format: int32
  *              example: [1011334,1017100,1009144,1010699,1009146,1016823,]
  */
-router.get('/', cache(cacheTime), ApiController.getAllCharacters)
+router.get('/', cache(cacheTime, onlyStatus200), ApiController.getAllCharacters)
 // router.get('/', ApiController.getAllCharacters) // Enable this to disable caching by apicache
 
 export default router
