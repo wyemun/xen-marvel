@@ -11,15 +11,15 @@ type QueryPaginationOptions = {
 }
 
 export interface MarvelRespCharacter {
-  id: number,
-  name: string,
-  description: string,
+  id: number
+  name: string
+  description: string
   modified: string
 }
 
 export interface MarvelResp {
-  code: number,
-  etag: string,
+  code: number
+  etag: string
   data: {
     offset: number
     limit: number
@@ -30,7 +30,7 @@ export interface MarvelResp {
 }
 
 export interface MarvelErrorResp {
-  etag?: string,
+  etag?: string
   code: number
   status: string
 }
@@ -40,8 +40,8 @@ const buildRequestOptions = (lastEtag?: string): Partial<RequestInit> => {
     method: 'get',
     headers: {
       'Accept-Encoding': 'gzip',
-      ...(lastEtag? {'If-None-Match': lastEtag} : {})
-    }
+      ...(lastEtag ? { 'If-None-Match': lastEtag } : {}),
+    },
   }
 }
 
@@ -50,16 +50,10 @@ export const buildFetchUrl = (path: string, query?: Partial<QueryPaginationOptio
   const ts = Date.now()
   const hash = crypto.createHash('md5').update(`${ts}${Locals.config().marvelPrivateKey}${Locals.config().marvelApiKey}`).digest('hex')
 
-  const builtInParams = [
-    `ts=${ts}`,
-    `apikey=${Locals.config().marvelApiKey}`,
-    `hash=${hash}`
-  ]
+  const builtInParams = [`ts=${ts}`, `apikey=${Locals.config().marvelApiKey}`, `hash=${hash}`]
 
   if (query) {
-    Object.entries(query).forEach(
-      ([k, v]) => builtInParams.push(`${k}=${v}`)
-    )
+    Object.entries(query).forEach(([k, v]) => builtInParams.push(`${k}=${v}`))
   }
 
   return `${Locals.config().marvelApiHost}${path}?${builtInParams.join('&')}`
@@ -67,9 +61,8 @@ export const buildFetchUrl = (path: string, query?: Partial<QueryPaginationOptio
 
 const getAllCharactersRestricted = (offset: number, lastEtag?: string): Promise<Response> => {
   console.log('Marvel api searching with offset: ', offset)
-  return fetch(
-    buildFetchUrl('/v1/public/characters', {limit: 100, offset}), {
-    ...buildRequestOptions(lastEtag)
+  return fetch(buildFetchUrl('/v1/public/characters', { limit: 100, offset }), {
+    ...buildRequestOptions(lastEtag),
   })
 }
 
@@ -77,57 +70,67 @@ const getAllCharacters = async (): Promise<number[]> => {
   let gotAll = false
   let offset = 0
   const perPage = 100
-  let total = 5000
 
   let results: number[] = []
 
-  while(!gotAll) {
-    
-    const mResp = await getAllCharactersRestricted(
-      offset,
-      offset > 0 ? NaiveCharacterCache.getInstance().getEtagByOffset(offset) : undefined) //skip first page
+  // call first page first
+  const mRespFirst = await getAllCharactersRestricted(offset)
+  if (mRespFirst.status >= 400) {
+    const mJson: MarvelErrorResp = await mRespFirst.json()
+    throw new GenericResponseError(mRespFirst.status, mJson.status || 'Unknown error')
+  } else {
+    const mJson: MarvelResp = await mRespFirst.json()
+    const characterIds = mJson.data.results.map(({ id }) => id)
+    NaiveCharacterCache.getInstance().add(offset, (<MarvelResp>mJson).etag, characterIds)
+    results = characterIds
 
-    if (mResp.status === 304) {
-      // data no change, no payload too
-      console.log('304 response from server, use cache')
-
-      const cachedCharacters = NaiveCharacterCache.getInstance().getCharactersByOffset(offset)
-      if (!cachedCharacters) {
-        throw new Error('Caching error.')
-      }
-
-      results = results.concat(
-        cachedCharacters
-      )
-
-    } else if (mResp.status >= 400) {
-      const mJson: MarvelErrorResp = await mResp.json()
-      throw new GenericResponseError(mResp.status, mJson.status || 'Unknown error')
-    } else {
-      const mJson: MarvelResp = await mResp.json()
-      const characterIds = mJson.data.results.map(({id}) => id)
-      NaiveCharacterCache.getInstance().add(offset, (<MarvelResp>mJson).etag, characterIds)
-      results = results.concat(characterIds)
-
-      if (offset === 0) {
-        total = mJson.data.total // the first request will always return full result
-      }
-
-      gotAll = total <= (offset + perPage)
-    }
-    
+    const total = mJson.data.total
     offset += perPage
+
+    console.log('First page total', total)
+    console.log('First page', results)
+
+    const promises: Promise<number[]>[] = []
+
+    while (total > offset + perPage) {
+      promises.push(
+        getAllCharactersRestricted(offset, NaiveCharacterCache.getInstance().getEtagByOffset(offset)).then((mResp) => {
+          if (mResp.status === 304) {
+            // data no change, no payload too
+            console.log('304 response from server, use cache')
+
+            const cachedCharacters = NaiveCharacterCache.getInstance().getCharactersByOffset(offset)
+            if (!cachedCharacters) {
+              throw new Error('Caching error.')
+            }
+
+            return cachedCharacters
+          } else if (mResp.status >= 400) {
+            return mResp.json().then((mJson: MarvelErrorResp) => {
+              throw new GenericResponseError(mResp.status, mJson.status || 'Unknown error')
+            })
+          } else {
+            return mResp.json().then((mJson: MarvelResp) => {
+              const characterIds = mJson.data.results.map(({ id }) => id)
+              NaiveCharacterCache.getInstance().add(offset, (<MarvelResp>mJson).etag, characterIds)
+
+              return characterIds
+            })
+          }
+        })
+      )
+      offset += perPage
+    }
+
+    const resultsFromPromise = await Promise.all(promises)
+
+    return results.concat(...resultsFromPromise)
   }
-
-  // console.log('From naive cache', NaiveCharacterCache.getInstance().getCharacters())
-
-  return results
 }
 
 const getCharacterById = async (characterId: string): Promise<MarvelRespCharacter> => {
-  const mResp = await fetch(
-    buildFetchUrl(`/v1/public/characters/${characterId}`), {
-    ...buildRequestOptions()
+  const mResp = await fetch(buildFetchUrl(`/v1/public/characters/${characterId}`), {
+    ...buildRequestOptions(),
   })
 
   if (mResp.status < 200 || mResp.status >= 300) {
@@ -137,10 +140,9 @@ const getCharacterById = async (characterId: string): Promise<MarvelRespCharacte
     const mJson: MarvelResp = await mResp.json()
     return mJson.data.results[0]
   }
-  
 }
 
 export default {
   getAllCharacters,
-  getCharacterById
+  getCharacterById,
 }
