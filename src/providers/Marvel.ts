@@ -67,7 +67,6 @@ const getAllCharactersRestricted = (offset: number, lastEtag?: string): Promise<
 }
 
 const getAllCharacters = async (): Promise<number[]> => {
-  let gotAll = false
   let offset = 0
   const perPage = 100
 
@@ -86,9 +85,6 @@ const getAllCharacters = async (): Promise<number[]> => {
 
     const total = mJson.data.total
     offset += perPage
-
-    console.log('First page total', total)
-    console.log('First page', results)
 
     const promises: Promise<number[]>[] = []
 
